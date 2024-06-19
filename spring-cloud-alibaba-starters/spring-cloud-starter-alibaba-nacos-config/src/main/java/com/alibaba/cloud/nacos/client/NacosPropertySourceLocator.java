@@ -81,6 +81,7 @@ public class NacosPropertySourceLocator implements PropertySourceLocator {
 			log.warn("no instance of config service found, can't load config from nacos");
 			return null;
 		}
+		// 从nacos获取配置的超时时间
 		long timeout = nacosConfigProperties.getTimeout();
 		nacosPropertySourceBuilder = new NacosPropertySourceBuilder(configService,
 				timeout);
@@ -98,8 +99,13 @@ public class NacosPropertySourceLocator implements PropertySourceLocator {
 		CompositePropertySource composite = new CompositePropertySource(
 				NACOS_PROPERTY_SOURCE_NAME);
 
+		// 加载SharedConfiguration
+		// spring.cloud.nacos.config.shared-configs[0]=xxx
 		loadSharedConfiguration(composite);
+		// 加载ExtConfiguration
+		// spring.cloud.nacos.config.extension-configs[0]=xxx
 		loadExtConfiguration(composite);
+		// 加载 dataId，dataId+suffix,dataId-profile-suffix 等配置
 		loadApplicationConfiguration(composite, dataIdPrefix, nacosConfigProperties, env);
 		return composite;
 	}
@@ -135,6 +141,7 @@ public class NacosPropertySourceLocator implements PropertySourceLocator {
 	private void loadApplicationConfiguration(
 			CompositePropertySource compositePropertySource, String dataIdPrefix,
 			NacosConfigProperties properties, Environment environment) {
+		// 文件后缀
 		String fileExtension = properties.getFileExtension();
 		String nacosGroup = properties.getGroup();
 		// load directly once by default
@@ -155,9 +162,11 @@ public class NacosPropertySourceLocator implements PropertySourceLocator {
 	private void loadNacosConfiguration(final CompositePropertySource composite,
 			List<NacosConfigProperties.Config> configs) {
 		for (NacosConfigProperties.Config config : configs) {
-			loadNacosDataIfPresent(composite, config.getDataId(), config.getGroup(),
-					NacosDataParserHandler.getInstance()
-							.getFileExtension(config.getDataId()),
+			loadNacosDataIfPresent(
+					composite,
+					config.getDataId(),
+					config.getGroup(),
+					NacosDataParserHandler.getInstance().getFileExtension(config.getDataId()),
 					config.isRefresh());
 		}
 	}
@@ -192,10 +201,12 @@ public class NacosPropertySourceLocator implements PropertySourceLocator {
 			final String group, String fileExtension, boolean isRefreshable) {
 		if (NacosContextRefresher.getRefreshCount() != 0) {
 			if (!isRefreshable) {
+				// 本地缓存获取
 				return NacosPropertySourceRepository.getNacosPropertySource(dataId,
 						group);
 			}
 		}
+		// 远程获取
 		return nacosPropertySourceBuilder.build(dataId, group, fileExtension,
 				isRefreshable);
 	}

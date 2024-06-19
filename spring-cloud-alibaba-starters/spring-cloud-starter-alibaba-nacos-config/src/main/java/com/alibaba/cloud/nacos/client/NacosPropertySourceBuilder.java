@@ -71,10 +71,12 @@ public class NacosPropertySourceBuilder {
 	 */
 	NacosPropertySource build(String dataId, String group, String fileExtension,
 			boolean isRefreshable) {
+		// 先从缓存获取 缓存没有就从Nacos 获取数据
 		List<PropertySource<?>> propertySources = loadNacosData(dataId, group,
 				fileExtension);
 		NacosPropertySource nacosPropertySource = new NacosPropertySource(propertySources,
 				group, dataId, new Date(), isRefreshable);
+		// 添加到map：dataId,group ---> nacosPropertySource
 		NacosPropertySourceRepository.collectNacosPropertySource(nacosPropertySource);
 		return nacosPropertySource;
 	}
@@ -83,6 +85,7 @@ public class NacosPropertySourceBuilder {
 			String fileExtension) {
 		String data = null;
 		try {
+			// 缓存获取并删除（第一次获取可保证最新）
 			String configSnapshot = NacosSnapshotConfigManager.getAndRemoveConfigSnapshot(dataId, group);
 			if (StringUtils.isEmpty(configSnapshot)) {
 				log.debug("get config from nacos, dataId: {}, group: {}", dataId, group);

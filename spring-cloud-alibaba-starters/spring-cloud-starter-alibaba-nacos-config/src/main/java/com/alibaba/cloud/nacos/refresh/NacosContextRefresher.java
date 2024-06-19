@@ -95,6 +95,7 @@ public class NacosContextRefresher
 	 */
 	private void registerNacosListenersForApplications() {
 		if (isRefreshEnabled()) {
+			// 为从Nacos获取的配置都加上监听器
 			for (NacosPropertySource propertySource : NacosPropertySourceRepository
 					.getAll()) {
 				if (!propertySource.isRefreshable()) {
@@ -108,6 +109,7 @@ public class NacosContextRefresher
 
 	private void registerNacosListener(final String groupKey, final String dataKey) {
 		String key = NacosPropertySourceRepository.getMapKey(dataKey, groupKey);
+		// 添加监听器
 		Listener listener = listenerMap.computeIfAbsent(key,
 				lst -> new AbstractSharedListener() {
 					@Override
@@ -115,8 +117,12 @@ public class NacosContextRefresher
 							String configInfo) {
 						refreshCountIncrement();
 						nacosRefreshHistory.addRefreshRecord(dataId, group, configInfo);
+						// 缓存最新数据
 						NacosSnapshotConfigManager.putConfigSnapshot(dataId, group,
 								configInfo);
+						// 发布 RefreshEvent
+						// sc 中的 RefreshEventListener 会监听此事件
+						// 然后触发ContextRefresher.refresh 逻辑
 						applicationContext.publishEvent(
 								new RefreshEvent(this, null, "Refresh Nacos config"));
 						if (log.isDebugEnabled()) {

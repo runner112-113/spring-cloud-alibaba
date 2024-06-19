@@ -52,6 +52,17 @@ import static com.alibaba.cloud.nacos.configdata.NacosConfigDataResource.NacosIt
  *
  * @author freeman
  * @since 2021.0.1.0
+ *
+ * ConfigDataLocation 通过 ConfigDataLocationResolver 解析后得到ConfigDataResource
+ *e.g:
+ * spring:
+ *   cloud:
+ *     nacos:
+ *       config:
+ *         preference: remote
+ *   config:
+ *     import:
+ *       - optional:nacos:test.yml?preference=remote
  */
 public class NacosConfigDataLocationResolver
 		implements ConfigDataLocationResolver<NacosConfigDataResource>, Ordered {
@@ -114,6 +125,12 @@ public class NacosConfigDataLocationResolver
 		return this.log;
 	}
 
+	/**
+	 * 以nacos: 开始，并且spring.cloud.nacos.config.enabled 为true 默认为true
+	 * @param context the location resolver context
+	 * @param location the location to check.
+	 * @return
+	 */
 	@Override
 	public boolean isResolvable(ConfigDataLocationResolverContext context,
 			ConfigDataLocation location) {
@@ -121,6 +138,7 @@ public class NacosConfigDataLocationResolver
 			return false;
 		}
 		return context.getBinder()
+				// spring.cloud.nacos.config.enabled
 				.bind(NacosConfigProperties.PREFIX + ".enabled", Boolean.class)
 				.orElse(true);
 	}

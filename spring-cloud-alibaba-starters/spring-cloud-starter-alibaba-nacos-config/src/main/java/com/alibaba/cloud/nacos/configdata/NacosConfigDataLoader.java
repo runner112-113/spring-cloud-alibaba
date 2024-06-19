@@ -79,6 +79,7 @@ public class NacosConfigDataLoader implements ConfigDataLoader<NacosConfigDataRe
 
 			NacosItemConfig config = resource.getConfig();
 			// pull config from nacos
+			// 从Nacos服务器获取配置信息
 			List<PropertySource<?>> propertySources = pullConfig(configService,
 					config.getGroup(), config.getDataId(), config.getSuffix(),
 					properties.getTimeout());
@@ -87,6 +88,7 @@ public class NacosConfigDataLoader implements ConfigDataLoader<NacosConfigDataRe
 					config.getGroup(), config.getDataId(), new Date(),
 					config.isRefreshEnabled());
 
+			// 缓存
 			NacosPropertySourceRepository.collectNacosPropertySource(propertySource);
 
 			return new ConfigData(propertySources, getOptions(context, resource));
